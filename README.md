@@ -26,7 +26,8 @@
 16. [GPT-4o](./17_GPT-4o) - 探索 GPT-4 的新特性
 17. [TTS, ASR, and OCR](./18_TTS_ASR_OCR) - 语音合成、语音识别和光学字符识别
 18. [Sora](./19_Sora) - 探索 Sora AI 视频生成模型
-19. [Sora](./20_rag_practice) - 探索 原生 rag最佳实践
+19. [rag_practice](./20_rag_practice) - 探索 原生 rag最佳实践
+20. [GraphRAG](./21_GraphRAG) - 探索 GraphRAG 最佳实践
 
 
 ## 学习建议
