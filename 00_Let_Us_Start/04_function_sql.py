@@ -1,10 +1,7 @@
 import json
 import os
-
+from zhipuai import ZhipuAI
 import dotenv
-
-
-
 
 def generate_sql(db_schema: str, query: str) -> str:
     """
@@ -18,7 +15,7 @@ def generate_sql(db_schema: str, query: str) -> str:
     dotenv.load_dotenv()
 
     # 创建智谱AI客户端
-    client = ZhipuAI(api_key=os.getenv("ZHIPUAI_API_KEY"))
+    client = ZhipuAI(api_key="")
 
     # 定义工具的详细描述,便于LLM理解用户的需求
     tool_desc = f"""根据用户提问，生成的SQL语句，用于回答用户的问题。
@@ -59,7 +56,7 @@ def generate_sql(db_schema: str, query: str) -> str:
 
     # 执行工具调用,获取结果
     completion = client.chat.completions.create(
-        model="glm-4-flash",
+        model="glm-4-plus",
         messages=messages,
         tools=tools,
         tool_choice="auto"  # 工具选择模式为auto,表示由LLM自行推理,觉得是生成普通消息还是进行工具调用
@@ -71,10 +68,59 @@ def generate_sql(db_schema: str, query: str) -> str:
 
 if __name__ == '__main__':
     # 创建sqlite数据库连接
-    conn = connect_db()
 
     # 获取数据库的schema信息
-    db_schema = get_database_schema(conn)
+    db_schema = """
+       CREATE TABLE Album (
+           AlbumId INTEGER PRIMARY KEY,
+           Title TEXT NOT NULL,
+           ArtistId INTEGER NOT NULL,
+           FOREIGN KEY (ArtistId) REFERENCES Artist(ArtistId)
+       );
+
+       CREATE TABLE Artist (
+           ArtistId INTEGER PRIMARY KEY,
+           Name TEXT NOT NULL
+       );
+
+       CREATE TABLE Track (
+           TrackId INTEGER PRIMARY KEY,
+           Name TEXT NOT NULL,
+           AlbumId INTEGER,
+           MediaTypeId INTEGER NOT NULL,
+           GenreId INTEGER,
+           Composer TEXT,
+           Milliseconds INTEGER NOT NULL,
+           Bytes INTEGER,
+           UnitPrice DECIMAL(10,2) NOT NULL,
+           FOREIGN KEY (AlbumId) REFERENCES Album(AlbumId),
+           FOREIGN KEY (GenreId) REFERENCES Genre(GenreId),
+           FOREIGN KEY (MediaTypeId) REFERENCES MediaType(MediaTypeId)
+       );
+
+       CREATE TABLE Genre (
+           GenreId INTEGER PRIMARY KEY,
+           Name TEXT NOT NULL
+       );
+
+       CREATE TABLE MediaType (
+           MediaTypeId INTEGER PRIMARY KEY,
+           Name TEXT NOT NULL
+       );
+
+       CREATE TABLE Playlist (
+           PlaylistId INTEGER PRIMARY KEY,
+           Name TEXT NOT NULL
+       );
+
+       CREATE TABLE PlaylistTrack (
+           PlaylistId INTEGER NOT NULL,
+           TrackId INTEGER NOT NULL,
+           PRIMARY KEY (PlaylistId, TrackId),
+           FOREIGN KEY (PlaylistId) REFERENCES Playlist(PlaylistId),
+           FOREIGN KEY (TrackId) REFERENCES Track(TrackId)
+       );
+       """
 
     # 在控制台循环获取用户输入
     while True:
@@ -88,8 +134,8 @@ if __name__ == '__main__':
         print(f"生成的SQL语句: \n{sql}")
 
         # 执行SQL,获取结果
-        answer = exec_sql(conn, sql)
+        # answer = exec_sql(conn, sql)
         print("--------------------------------------------------")
-        print(f"执行结果: {answer}")
+        # print(f"执行结果: {answer}")
 
 
