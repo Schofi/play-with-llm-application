@@ -234,3 +234,135 @@ embedding_latency = Histogram('embedding_latency_seconds', 'Embedding generation
 ```
 
 这样就完成了一个基本的BGE中文模型的VLLM部署。记得根据实际需求调整配置参数，并添加适当的错误处理和监控。
+
+
+
+
+VLLM 提供了命令行部署的方式，非常简单。以下是具体步骤：
+
+1. 首先安装 VLLM：
+```bash
+pip install vllm
+```
+
+2. 使用命令行启动服务：
+```bash
+# 基本用法
+python -m vllm.entrypoints.openai.api_server \
+    --model BAAI/bge-large-zh-v1.5 \
+    --host 0.0.0.0 \
+    --port 8000
+
+# 更多参数配置
+python -m vllm.entrypoints.openai.api_server \
+    --model BAAI/bge-large-zh-v1.5 \
+    --host 0.0.0.0 \
+    --port 8000 \
+    --tensor-parallel-size 1 \  # GPU数量
+    --trust-remote-code true \
+    --dtype float16 \          # 使用 float16 精度
+    --max-num-batched-tokens 4096  # 最大批处理token数
+```
+
+3. 测试部署的服务：
+```python
+import openai
+
+# 配置客户端
+client = openai.OpenAI(
+    base_url="http://localhost:8000/v1",  # VLLM 服务地址
+    api_key="dummy"  # 随便填写，本地部署不需要真实的 API key
+)
+
+# 发送请求
+def get_embedding(text):
+    response = client.embeddings.create(
+        model="BAAI/bge-large-zh-v1.5",  # 模型名称
+        input=text,  # 输入文本
+    )
+    return response.data[0].embedding
+
+# 测试
+texts = ["这是一段测试文本", "另一段测试文本"]
+embeddings = [get_embedding(text) for text in texts]
+print(embeddings)
+```
+
+4. 如果你想用 Docker 部署：
+```bash
+# 拉取镜像
+docker pull vllm/vllm-openai
+
+# 运行容器
+docker run --gpus all -p 8000:8000 \
+    vllm/vllm-openai \
+    --model BAAI/bge-large-zh-v1.5 \
+    --host 0.0.0.0 \
+    --port 8000 \
+    --trust-remote-code true
+```
+
+5. 常用参数说明：
+```bash
+--model              # 模型路径或huggingface模型名
+--host               # 服务器地址
+--port               # 端口号
+--tensor-parallel-size # GPU数量
+--trust-remote-code  # 是否信任远程代码
+--dtype             # 数据类型(float16/float32)
+--max-num-batched-tokens # 最大批处理token数
+--max-num-seqs      # 最大序列数
+--gpu-memory-utilization # GPU显存利用率(0-1)
+--quantization      # 量化设置(如果需要)
+```
+
+6. 部署建议：
+```bash
+# 单GPU部署
+python -m vllm.entrypoints.openai.api_server \
+    --model BAAI/bge-large-zh-v1.5 \
+    --host 0.0.0.0 \
+    --port 8000 \
+    --dtype float16 \
+    --max-num-batched-tokens 4096
+
+# 多GPU部署
+python -m vllm.entrypoints.openai.api_server \
+    --model BAAI/bge-large-zh-v1.5 \
+    --tensor-parallel-size 2 \  # 使用2张GPU
+    --host 0.0.0.0 \
+    --port 8000 \
+    --dtype float16
+
+# 低显存设置
+python -m vllm.entrypoints.openai.api_server \
+    --model BAAI/bge-large-zh-v1.5 \
+    --host 0.0.0.0 \
+    --port 8000 \
+    --dtype float16 \
+    --gpu-memory-utilization 0.8 \
+    --max-num-batched-tokens 2048
+```
+
+7. 启动脚本示例（start_server.sh）：
+```bash
+#!/bin/bash
+
+# 设置环境变量
+export CUDA_VISIBLE_DEVICES=0  # 指定GPU
+
+# 启动服务
+python -m vllm.entrypoints.openai.api_server \
+    --model BAAI/bge-large-zh-v1.5 \
+    --host 0.0.0.0 \
+    --port 8000 \
+    --dtype float16 \
+    --max-num-batched-tokens 4096 \
+    --trust-remote-code true \
+    >> vllm.log 2>&1 &  # 将日志输出到文件
+
+# 打印进程ID
+echo $! > vllm.pid
+```
+
+这种命令行部署方式比较简单直接，适合快速部署和测试。如果需要更复杂的功能（如自定义路由、认证等），可能需要考虑使用前面提到的 FastAPI 方式部署。
