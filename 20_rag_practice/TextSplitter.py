@@ -23,7 +23,7 @@ MAX_TABLE_ROWS = 20
 MAX_HTML_TABLE_LENGTH = 2000
 MIN_HORIZONTAL_RULE_LENGTH = 3
 MAX_SENTENCE_LENGTH = 400
-MAX_QUOTED_TEXT_LENGTH = 300
+MAX_QUOTED_TEXT_LENGTH = 500
 MAX_PARENTHETICAL_CONTENT_LENGTH = 200
 MAX_NESTED_PARENTHESES = 5
 MAX_MATH_INLINE_LENGTH = 100
@@ -165,32 +165,12 @@ class TextSplitter:
 
 def main():
     # 示例用法
-    sample_text = """
-    # Heading 1
+    with open('cloudastructure_s1a4.htm_text.txt', 'r', encoding='utf-8') as f:
+        content = f.read()  # 整个文件内容在一个字符串中
 
-    This is a paragraph with some **bold** and *italic* text.
-
-    - List item 1
-    - List item 2
-
-    > This is a blockquote
-
-    ```python
-    def hello_world():
-        print("Hello, World!")
-    ```
-
-    | Column 1 | Column 2 |
-    |----------|----------|
-    | Cell 1   | Cell 2   |
-
-    <div>This is some HTML content</div>
-
-    Normal paragraph text.
-    """
 
     splitter = TextSplitter(chunk_regex)
-    chunks = splitter.split_with_metadata(sample_text)
+    chunks = splitter.split_with_metadata(content)
 
     for i, chunk in enumerate(chunks, 1):
         print(f"Chunk {i}:")
