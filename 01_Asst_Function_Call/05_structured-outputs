@@ -1,0 +1,29 @@
+# Python使用Pydantic
+from pydantic import BaseModel
+from openai import OpenAI
+
+# 定义数据结构
+class Event(BaseModel):
+    title: str
+    date: str
+    location: str
+    attendees: list[str]
+
+# 使用结构化输出
+client = OpenAI(api_key="")
+response = client.beta.chat.completions.parse(
+    model="gpt-4o-2024-08-06",
+    messages=[
+        {"role": "user", "content": "下周二在北京有个技术研讨会"}
+    ],
+    response_format=Event
+)
+
+# 直接获取结构化数据
+event = response.choices[0].message.parsed
+print(f"活动标题: {event.title}")
+print(f"日期: {event.date}")
+
+
+# 活动标题: 技术研讨会
+# 日期: 2023-11-14
